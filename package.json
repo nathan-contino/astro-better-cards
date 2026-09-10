@@ -1,0 +1,13 @@
+{
+  "name": "astro-better-cards",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./Card.astro": "./Card.astro"
+  },
+  "peerDependencies": {
+    "astro": ">=4.0.0"
+  },
+  "keywords": ["astro", "cards", "docs", "navigation"],
+  "license": "MIT"
+}
