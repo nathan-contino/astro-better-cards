@@ -1,72 +1,91 @@
 # astro-better-cards
 
-Clickable card components for Astro docs sites. Three variants: `full` (large card with optional image/icon), `compact` (nav row with optional label), and `quickstart` (small icon + title, with coming-soon support).
+Components for cards and navigation in Astro documentation sites.
 
-## Install
+## Card
 
-```
-npm install astro-better-cards
-```
+A single card with three display variants.
 
-## Usage
-
-```mdx
+```astro
 import Card from 'astro-better-cards/Card.astro';
+
+<Card
+  href="/docs/section/page"
+  title="Page Title"
+  description="Optional description text."
+  icon="/img/icons/example.svg"
+  variant="full"
+/>
 ```
 
-### full (default)
+### Props
 
-Large bordered card. Good for section index pages.
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `href` | `string` | required | Link destination |
+| `title` | `string` | required | Card title (HTML allowed) |
+| `description` | `string` | — | Subtitle text |
+| `icon` | `string` | — | Icon image URL (light mode) |
+| `darkIcon` | `string` | — | Icon image URL (dark mode) |
+| `cardImage` | `string` | — | Hero image URL |
+| `variant` | `'full' \| 'compact' \| 'quickstart'` | `'full'` | Display style |
+| `comingSoon` | `boolean` | `false` | Greys out the card |
+| `label` | `string` | — | Small label text (e.g. `'->'`) |
+| `labelFirst` | `boolean` | `false` | Render label before title |
 
-```mdx
-<Card href="/docs/section" title="Section Title" description="A short description." />
+## ChildCards
+
+Automatically renders cards for child pages of the current section, pulled from an Astro content collection.
+
+```astro
+import ChildCards from 'astro-better-cards/ChildCards.astro';
+
+<!-- direct children of the current page's folder -->
+<ChildCards />
+
+<!-- grandchildren grouped by subfolder with section headers -->
+<ChildCards depth={2} />
+
+<!-- children of an explicit folder -->
+<ChildCards folder="get-started/quickstarts/web" />
+
+<!-- children from a different collection -->
+<ChildCards collection="articles" />
 ```
 
-With an icon:
+Typically used via the `sectionIndex: true` front matter field (rendered automatically by the layout), or imported directly in MDX for more control.
 
-```mdx
-<Card href="/docs/section" title="Section Title" icon="/img/icon.svg" darkIcon="/img/icon-dark.svg" />
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `collection` | `string` | `'docs'` | Astro content collection name |
+| `folder` | `string` | current page folder | Collection-relative path (`get-started/foo`), URL-absolute path (`/docs/get-started/foo`), or relative path (`./sub`, `../other`) |
+| `depth` | `1 \| 2` | `1` | `1` = direct children; `2` = grandchildren grouped under section headers |
+
+Pages with `excludeFromNav: true` or `route: false` are excluded.
+
+## PageNav
+
+Renders previous/next navigation links at the bottom of a page, resolving page titles automatically from the collection.
+
+```astro
+import PageNav from 'astro-better-cards/PageNav.astro';
+
+<PageNav
+  currentId={entry.id}
+  lastPage="step-1"
+  nextPage="step-3"
+/>
 ```
 
-With a card image (displayed above the content):
+Or set `lastPage` / `nextPage` in front matter and let the layout render it automatically.
 
-```mdx
-<Card href="/docs/section" title="Section Title" cardImage="/img/banner.png" />
-```
+### Props
 
-### compact
-
-Small nav row, often used for prev/next links. The `label` prop renders a short badge (e.g. an arrow). `labelFirst` controls which side the label appears on.
-
-```mdx
-<Card variant="compact" href="/docs/next-page" title="Next Page" label="->" labelFirst={true} />
-<Card variant="compact" href="/docs/prev-page" title="Previous Page" label="<-" labelFirst={false} />
-```
-
-### quickstart
-
-Small icon + title card for quickstart grids. Supports a `comingSoon` state that greys out the card.
-
-```mdx
-<Card variant="quickstart" href="/docs/quickstart/react" title="React" icon="/img/react.svg" />
-<Card variant="quickstart" href="" title="Vue" icon="/img/vue.svg" comingSoon={true} />
-```
-
-## Props
-
-| Prop | Variants | Type | Default | Description |
-|------|----------|------|---------|-------------|
-| `href` | all | `string` | — | Link destination. |
-| `title` | all | `string` | — | Card title. Rendered with `set:html` so HTML entities and inline markup work. |
-| `variant` | all | `'full' \| 'compact' \| 'quickstart'` | `'full'` | Which card style to render. |
-| `description` | `full` | `string` | — | Optional subtitle below the title. |
-| `icon` | `full`, `quickstart` | `string` | — | Icon image URL. Hidden in dark mode when `darkIcon` is also set. |
-| `darkIcon` | `full` | `string` | — | Dark-mode icon image URL. |
-| `cardImage` | `full` | `string` | — | Banner image displayed above the card content. |
-| `label` | `compact` | `string` | — | Short badge text (e.g. `"->"`, `"<-"`, a step number). |
-| `labelFirst` | `compact` | `boolean` | `false` | When `true`, the label appears after the title (right-aligned). |
-| `comingSoon` | `quickstart` | `boolean` | `false` | Greys out the card and appends `* Coming Soon` to the title. |
-
-## Styling
-
-Cards use Tailwind CSS utility classes and respond to dark mode via the `dark:` variant. No Tailwind integration is required in your project -- classes are inlined in the component.
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `collection` | `string` | `'docs'` | Astro content collection name |
+| `currentId` | `string` | required | The current page's `entry.id` (e.g. `get-started/start-here/step-1.mdx`) |
+| `nextPage` | `string` | — | Relative href to the next page (e.g. `step-2`) or absolute (`/docs/...`) |
+| `lastPage` | `string` | — | Relative href to the previous page |

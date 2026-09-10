@@ -1,0 +1,148 @@
+---
+import { getCollection } from 'astro:content';
+import { Marked } from 'marked';
+import Card from './Card.astro';
+
+interface Props {
+  collection?: string;
+  folder?: string;
+  depth?: 1 | 2;
+}
+
+const { collection = 'docs', folder, depth = 1 } = Astro.props;
+
+const pages = await getCollection(collection as any);
+
+// Compute collection-relative prefix (no leading/trailing slashes, no extension)
+let prefix: string;
+if (folder !== undefined) {
+  if (folder.startsWith('/')) {
+    const noSlash = folder.replace(/^\/+/, '');
+    prefix = noSlash.startsWith(`${collection}/`) ? noSlash.slice(collection.length + 1) : noSlash;
+  } else if (folder.startsWith('./') || folder.startsWith('../')) {
+    const pathname = Astro.url.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/, '');
+    const pagePrefix = pathname.startsWith(`${collection}/`) ? pathname.slice(collection.length + 1) : pathname;
+    const pageFolder = pagePrefix.includes('/') ? pagePrefix.replace(/\/[^/]+$/, '') : '';
+    const parts = pageFolder ? pageFolder.split('/') : [];
+    for (const seg of folder.split('/')) {
+      if (seg === '..') parts.pop();
+      else if (seg !== '.' && seg !== '') parts.push(seg);
+    }
+    prefix = parts.join('/');
+  } else {
+    prefix = folder;
+  }
+} else {
+  const pathname = Astro.url.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/, '');
+  prefix = pathname.startsWith(`${collection}/`) ? pathname.slice(collection.length + 1) : pathname;
+}
+prefix = prefix.replace(/^\/+|\/+$/g, '');
+
+function stripExt(id: string): string {
+  return id.replace(/\.(md|mdx)$/i, '');
+}
+
+function isDirectChild(id: string): boolean {
+  const cid = stripExt(id);
+  if (!prefix) return !cid.includes('/') && cid !== 'index';
+  if (!cid.startsWith(`${prefix}/`)) return false;
+  const rem = cid.slice(prefix.length + 1);
+  return rem.length > 0 && !rem.includes('/') && rem !== 'index';
+}
+
+function isGrandchildPage(id: string): boolean {
+  const cid = stripExt(id);
+  if (!cid.startsWith(`${prefix}/`)) return false;
+  const rem = cid.slice(prefix.length + 1);
+  const parts = rem.split('/');
+  return parts.length === 2 && parts[1] !== 'index';
+}
+
+function getSubfolder(id: string): string {
+  return stripExt(id).slice(prefix.length + 1).split('/')[0];
+}
+
+const remark = new Marked();
+const md = (s: string) => remark.parseInline(s) as Promise<string>;
+
+const valid = (pages as any[]).filter(p => !p.data.excludeFromNav && p.data.route !== false);
+
+type NavItem = {
+  href: string;
+  title: string;
+  description?: string;
+  icon?: string | null;
+  darkIcon?: string;
+  cardImage?: string;
+};
+
+type NavGroup = { title: string; order: number; items: NavItem[] };
+
+let items: NavItem[] = [];
+let groups: NavGroup[] = [];
+
+if (depth === 1) {
+  const children = valid.filter(p => isDirectChild(p.id));
+  children.sort((a, b) => (a.data.order ?? 1000) - (b.data.order ?? 1000) || a.data.title.localeCompare(b.data.title));
+  items = await Promise.all(children.map(async p => ({
+    href: `/${collection}/${stripExt(p.id).replace(/\/index$/, '')}`,
+    title: await md(p.data.title),
+    description: p.data.description,
+    icon: p.data.icon ?? null,
+    darkIcon: p.data.darkIcon,
+    cardImage: p.data.cardImage,
+  })));
+} else {
+  const grandchildren = valid.filter(p => isGrandchildPage(p.id));
+  const subfolderNames = [...new Set(grandchildren.map(p => getSubfolder(p.id)))];
+
+  groups = await Promise.all(subfolderNames.map(async sf => {
+    const indexEntry = (pages as any[]).find(p => stripExt(p.id) === `${prefix}/${sf}/index`);
+    const sectionTitle: string = indexEntry
+      ? await md(indexEntry.data.title)
+      : sf.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+    const sectionOrder: number = indexEntry?.data.order ?? 1000;
+
+    const sfItems = grandchildren.filter(p => getSubfolder(p.id) === sf);
+    sfItems.sort((a, b) => (a.data.order ?? 1000) - (b.data.order ?? 1000) || a.data.title.localeCompare(b.data.title));
+
+    return {
+      title: sectionTitle,
+      order: sectionOrder,
+      items: await Promise.all(sfItems.map(async p => ({
+        href: `/${collection}/${stripExt(p.id)}`,
+        title: await md(p.data.title),
+        description: p.data.description,
+        icon: p.data.icon ?? null,
+        darkIcon: p.data.darkIcon,
+        cardImage: p.data.cardImage,
+      }))),
+    };
+  }));
+
+  groups.sort((a, b) => a.order - b.order);
+}
+---
+
+{depth === 1 ? (
+  <div class="gap-6 mt-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
+    {items.map(item => (
+      <Card href={item.href} title={item.title} description={item.description}
+        icon={item.icon} darkIcon={item.darkIcon} cardImage={item.cardImage} variant="full" />
+    ))}
+  </div>
+) : (
+  <Fragment>
+    {groups.map(group => (
+      <Fragment>
+        <h2 class="mt-10 mb-2 text-xl font-semibold not-prose" set:html={group.title} />
+        <div class="gap-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
+          {group.items.map(item => (
+            <Card href={item.href} title={item.title} description={item.description}
+              icon={item.icon} darkIcon={item.darkIcon} cardImage={item.cardImage} variant="full" />
+          ))}
+        </div>
+      </Fragment>
+    ))}
+  </Fragment>
+)}
