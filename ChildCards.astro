@@ -125,14 +125,14 @@ if (depth === 1) {
 ---
 
 {depth === 1 ? (
-  <div class="gap-6 mt-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
+  <div class="gap-6 mt-6 mb-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
     {items.map(item => (
       <Card href={item.href} title={item.title} description={item.description}
         icon={item.icon} darkIcon={item.darkIcon} cardImage={item.cardImage} variant="full" />
     ))}
   </div>
 ) : (
-  <Fragment>
+  <div class="mb-6">
     {groups.map(group => (
       <Fragment>
         <h2 class="mt-10 mb-2 text-xl font-semibold not-prose" set:html={group.title} />
@@ -144,5 +144,5 @@ if (depth === 1) {
         </div>
       </Fragment>
     ))}
-  </Fragment>
+  </div>
 )}
