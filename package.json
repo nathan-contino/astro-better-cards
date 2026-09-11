@@ -1,6 +1,6 @@
 {
   "name": "astro-better-cards",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "exports": {
     "./Card.astro": "./Card.astro",
