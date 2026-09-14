@@ -110,8 +110,11 @@ if (depth === 1) {
   const subfolderNames = [...new Set(grandchildren.map(p => getSubfolder(p.id)))];
 
   groups = await Promise.all(subfolderNames.map(async sf => {
-    const indexPath = prefix ? `${prefix}/${sf}/index` : `${sf}/index`;
-    const indexEntry = (pages as any[]).find(p => stripExt(p.id) === indexPath);
+    const indexId = prefix ? `${prefix}/${sf}` : sf;
+    const indexEntry = (pages as any[]).find(p => {
+      const cid = stripExt(p.id);
+      return cid === indexId || cid === `${indexId}/index`;
+    });
     const sectionTitle: string = indexEntry
       ? await md(indexEntry.data.title)
       : sf.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
