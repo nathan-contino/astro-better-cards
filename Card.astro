@@ -10,6 +10,8 @@ const {
   comingSoon = false,
   label,
   labelFirst = false,
+  version,
+  badges,
 } = Astro.props;
 ---
 {variant === 'full' && (
@@ -20,6 +22,13 @@ const {
       {darkIcon && <img class="hidden dark:block w-14 h-14 object-contain shrink-0" src={darkIcon} alt="" aria-hidden="true" />}
       <div>
         <p class="font-bold group-hover:text-indigo-500 pb-1 text-xl sm:leading-tight sm:pb-2 sm:text-lg md:text-xl lg:text-2xl 2xl:leading-tight" set:html={title}></p>
+        {(version || (badges && badges.length > 0)) && (
+          <p class="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-1.5">
+            {version && <span>v{version}</span>}
+            {version && badges && badges.length > 0 && <span>&mdash;</span>}
+            {badges && badges.map((b: string) => <span class={`badge badge-${b}`}>{b}</span>)}
+          </p>
+        )}
         {description && <p class="font-normal lg:leading-4 sm:leading-4 text-sm">{description}</p>}
       </div>
     </div>

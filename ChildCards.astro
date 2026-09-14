@@ -52,6 +52,10 @@ function isDirectChild(id: string): boolean {
 
 function isGrandchildPage(id: string): boolean {
   const cid = stripExt(id);
+  if (!prefix) {
+    const parts = cid.split('/');
+    return parts.length === 2 && parts[1] !== 'index';
+  }
   if (!cid.startsWith(`${prefix}/`)) return false;
   const rem = cid.slice(prefix.length + 1);
   const parts = rem.split('/');
@@ -59,6 +63,7 @@ function isGrandchildPage(id: string): boolean {
 }
 
 function getSubfolder(id: string): string {
+  if (!prefix) return stripExt(id).split('/')[0];
   return stripExt(id).slice(prefix.length + 1).split('/')[0];
 }
 
@@ -74,6 +79,8 @@ type NavItem = {
   icon?: string | null;
   darkIcon?: string;
   cardImage?: string;
+  version?: string;
+  badges?: string[];
 };
 
 type NavGroup = { title: string; order: number; items: NavItem[] };
@@ -91,13 +98,16 @@ if (depth === 1) {
     icon: p.data.icon ?? null,
     darkIcon: p.data.darkIcon,
     cardImage: p.data.cardImage,
+    version: p.data.version,
+    badges: p.data.badges,
   })));
 } else {
   const grandchildren = valid.filter(p => isGrandchildPage(p.id));
   const subfolderNames = [...new Set(grandchildren.map(p => getSubfolder(p.id)))];
 
   groups = await Promise.all(subfolderNames.map(async sf => {
-    const indexEntry = (pages as any[]).find(p => stripExt(p.id) === `${prefix}/${sf}/index`);
+    const indexPath = prefix ? `${prefix}/${sf}/index` : `${sf}/index`;
+    const indexEntry = (pages as any[]).find(p => stripExt(p.id) === indexPath);
     const sectionTitle: string = indexEntry
       ? await md(indexEntry.data.title)
       : sf.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
@@ -116,6 +126,8 @@ if (depth === 1) {
         icon: p.data.icon ?? null,
         darkIcon: p.data.darkIcon,
         cardImage: p.data.cardImage,
+        version: p.data.version,
+        badges: p.data.badges,
       }))),
     };
   }));
@@ -128,7 +140,8 @@ if (depth === 1) {
   <div class="gap-6 mt-6 mb-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
     {items.map(item => (
       <Card href={item.href} title={item.title} description={item.description}
-        icon={item.icon} darkIcon={item.darkIcon} cardImage={item.cardImage} variant="full" />
+        icon={item.icon} darkIcon={item.darkIcon} cardImage={item.cardImage}
+        version={item.version} badges={item.badges} variant="full" />
     ))}
   </div>
 ) : (
@@ -139,7 +152,8 @@ if (depth === 1) {
         <div class="gap-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
           {group.items.map(item => (
             <Card href={item.href} title={item.title} description={item.description}
-              icon={item.icon} darkIcon={item.darkIcon} cardImage={item.cardImage} variant="full" />
+              icon={item.icon} darkIcon={item.darkIcon} cardImage={item.cardImage}
+              version={item.version} badges={item.badges} variant="full" />
           ))}
         </div>
       </Fragment>
