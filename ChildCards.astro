@@ -34,7 +34,11 @@ if (folder !== undefined) {
   }
 } else {
   const pathname = Astro.url.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/, '');
-  prefix = pathname.startsWith(`${collection}/`) ? pathname.slice(collection.length + 1) : pathname;
+  if (pathname === '' || pathname === collection) {
+    prefix = '';
+  } else {
+    prefix = pathname.startsWith(`${collection}/`) ? pathname.slice(collection.length + 1) : pathname;
+  }
 }
 prefix = prefix.replace(/^\/+|\/+$/g, '');
 
