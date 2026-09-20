@@ -20,9 +20,9 @@ if (folder !== undefined) {
     const noSlash = folder.replace(/^\/+/, '');
     prefix = noSlash.startsWith(`${collection}/`) ? noSlash.slice(collection.length + 1) : noSlash;
   } else if (folder.startsWith('./') || folder.startsWith('../')) {
-    const pathname = Astro.url.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/, '');
+    const pathname = Astro.url.pathname.replace(/^\/+|\/+\(/g, '').replace(/\.html\)/, '');
     const pagePrefix = pathname.startsWith(`${collection}/`) ? pathname.slice(collection.length + 1) : pathname;
-    const pageFolder = pagePrefix.includes('/') ? pagePrefix.replace(/\/[^/]+$/, '') : '';
+    const pageFolder = pagePrefix.includes('/') ? pagePrefix.replace(/\/[^/]+\$/, '') : '';
     const parts = pageFolder ? pageFolder.split('/') : [];
     for (const seg of folder.split('/')) {
       if (seg === '..') parts.pop();
@@ -33,17 +33,17 @@ if (folder !== undefined) {
     prefix = folder;
   }
 } else {
-  const pathname = Astro.url.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/, '');
+  const pathname = Astro.url.pathname.replace(/^\/+|\/+\(/g, '').replace(/\.html\)/, '');
   if (pathname === '' || pathname === collection) {
     prefix = '';
   } else {
     prefix = pathname.startsWith(`${collection}/`) ? pathname.slice(collection.length + 1) : pathname;
   }
 }
-prefix = prefix.replace(/^\/+|\/+$/g, '');
+prefix = prefix.replace(/^\/+|\/+\$/g, '');
 
 function stripExt(id: string): string {
-  return id.replace(/\.(md|mdx)$/i, '');
+  return id.replace(/\.(md|mdx)\$/i, '');
 }
 
 function isDirectChild(id: string): boolean {
@@ -96,7 +96,8 @@ if (depth === 1) {
   const children = valid.filter(p => isDirectChild(p.id));
   children.sort((a, b) => (a.data.order ?? 1000) - (b.data.order ?? 1000) || a.data.title.localeCompare(b.data.title));
   items = await Promise.all(children.map(async p => ({
-    href: `/${collection}/${stripExt(p.id).replace(/\/index$/, '')}`,
+    // FIX: Replaced `/${collection}/` with a single `/`
+    href: `/${stripExt(p.id).replace(/\/index$/, '')}`,
     title: await md(p.data.title),
     description: p.data.description,
     icon: p.data.icon ?? null,
@@ -127,7 +128,8 @@ if (depth === 1) {
       title: sectionTitle,
       order: sectionOrder,
       items: await Promise.all(sfItems.map(async p => ({
-        href: `/${collection}/${stripExt(p.id)}`,
+        // FIX: Replaced `/${collection}/` with a single `/`
+        href: `/${stripExt(p.id)}`,
         title: await md(p.data.title),
         description: p.data.description,
         icon: p.data.icon ?? null,
