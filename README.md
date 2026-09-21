@@ -30,8 +30,10 @@ import Card from 'astro-better-cards/Card.astro';
 | `cardImage` | `string` | — | Hero image URL |
 | `variant` | `'full' \| 'compact' \| 'quickstart'` | `'full'` | Display style |
 | `comingSoon` | `boolean` | `false` | Greys out the card |
-| `label` | `string` | — | Small label text (e.g. `'->'`) |
+| `label` | `string` | — | Small label text |
 | `labelFirst` | `boolean` | `false` | Render label before title |
+| `version` | `string` | — | Version string shown below the title |
+| `badges` | `string[]` | — | Badge labels shown beside the version |
 
 ## ChildCards
 
@@ -46,14 +48,15 @@ import ChildCards from 'astro-better-cards/ChildCards.astro';
 <!-- grandchildren grouped by subfolder with section headers -->
 <ChildCards depth={2} />
 
-<!-- children of an explicit folder -->
-<ChildCards folder="get-started/quickstarts/web" />
+<!-- deeper nesting (up to 4) with h2/h3/h4 section headers -->
+<ChildCards depth={4} />
+
+<!-- explicit folder, 3 columns -->
+<ChildCards folder="get-started/quickstarts" columns={3} />
 
 <!-- children from a different collection -->
 <ChildCards collection="articles" />
 ```
-
-Typically used via the `sectionIndex: true` front matter field (rendered automatically by the layout), or imported directly in MDX for more control.
 
 ### Props
 
@@ -61,31 +64,42 @@ Typically used via the `sectionIndex: true` front matter field (rendered automat
 |------|------|---------|-------------|
 | `collection` | `string` | `'docs'` | Astro content collection name |
 | `folder` | `string` | current page folder | Collection-relative path (`get-started/foo`), URL-absolute path (`/docs/get-started/foo`), or relative path (`./sub`, `../other`) |
-| `depth` | `1 \| 2` | `1` | `1` = direct children; `2` = grandchildren grouped under section headers |
+| `depth` | `1 \| 2 \| 3 \| 4` | `1` | `1` = direct children; `2`-`4` = deeper pages grouped under section headers (h2, then h3, then h4) |
+| `columns` | `1 \| 2 \| 3 \| 4` | `2` | Number of columns in the card grid |
 
 Pages with `excludeFromNav: true` or `route: false` are excluded.
 
 ## PageNav
 
-Renders previous/next navigation links at the bottom of a page, resolving page titles automatically from the collection.
+Renders previous/next navigation links at the bottom of a page. Reads `prev` and `next` from the
+current page's frontmatter and resolves titles automatically from the collection. Prop values
+override frontmatter when both are present.
+
+Add `prev` and `next` to the page's frontmatter:
+
+```yaml
+prev: "step-1"
+next: "step-3"
+```
+
+Then use the component with no props:
 
 ```astro
 import PageNav from 'astro-better-cards/PageNav.astro';
 
-<PageNav
-  currentId={entry.id}
-  lastPage="step-1"
-  nextPage="step-3"
-/>
+<PageNav />
 ```
 
-Or set `lastPage` / `nextPage` in front matter and let the layout render it automatically.
+Or override frontmatter on a specific instance:
+
+```astro
+<PageNav prev="other-page" next="another-page" />
+```
 
 ### Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `collection` | `string` | `'docs'` | Astro content collection name |
-| `currentId` | `string` | required | The current page's `entry.id` (e.g. `get-started/start-here/step-1.mdx`) |
-| `nextPage` | `string` | — | Relative href to the next page (e.g. `step-2`) or absolute (`/docs/...`) |
-| `lastPage` | `string` | — | Relative href to the previous page |
+| `prev` | `string` | frontmatter `prev` | Path to the previous page (relative filename, collection-relative, or absolute `/`) |
+| `next` | `string` | frontmatter `next` | Path to the next page |
