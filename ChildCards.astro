@@ -117,7 +117,7 @@ const colClass = colClasses[columns] ?? colClasses[2];
 
 async function pageToItem(p: any): Promise<NavItem> {
   return {
-    href: `/${stripExt(p.id).replace(/\/index$/, '')}`,
+    href: `/${collection}/${stripExt(p.id).replace(/\/index$/, '')}`,
     title: await md(p.data.title) as string,
     description: p.data.description,
     icon: p.data.icon ?? null,

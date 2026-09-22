@@ -18,11 +18,17 @@ function stripExt(id: string): string {
 }
 
 const pathname = Astro.url.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/, '');
-const currentFolder = pathname.includes('/') ? pathname.replace(/\/[^/]+$/, '') : '';
+// strip the collection URL prefix so the remainder matches bare entry IDs
+const pathnameRelative = pathname.startsWith(`${collection}/`)
+  ? pathname.slice(collection.length + 1)
+  : pathname;
+const currentFolder = pathnameRelative.includes('/')
+  ? pathnameRelative.replace(/\/[^/]+$/, '')
+  : '';
 
 const currentEntry = (pages as any[]).find(p => {
   const cid = stripExt(p.id);
-  return cid === pathname || cid === `${pathname}/index`;
+  return cid === pathnameRelative || cid === `${pathnameRelative}/index`;
 });
 
 const prevPath = prevProp ?? currentEntry?.data.prev;
@@ -40,7 +46,7 @@ function findPage(href: string) {
 
 function makeHref(href: string): string {
   if (href.startsWith('/')) return href;
-  return `/${currentFolder ? `${currentFolder}/` : ''}${href}`;
+  return `/${collection}/${currentFolder ? `${currentFolder}/` : ''}${href}`;
 }
 
 let prevEntry = prevPath ? findPage(prevPath) : null;
@@ -64,11 +70,11 @@ if (!prevEntry || !nextEntry) {
   const idx = siblings.findIndex(p => stripExt(p.id) === pathname);
   if (idx > 0 && !prevEntry) {
     prevEntry = siblings[idx - 1];
-    prevHref = `/${stripExt(prevEntry.id).replace(/\/index$/, '')}`;
+    prevHref = `/${collection}/${stripExt(prevEntry.id).replace(/\/index$/, '')}`;
   }
   if (idx >= 0 && idx < siblings.length - 1 && !nextEntry) {
     nextEntry = siblings[idx + 1];
-    nextHref = `/${stripExt(nextEntry.id).replace(/\/index$/, '')}`;
+    nextHref = `/${collection}/${stripExt(nextEntry.id).replace(/\/index$/, '')}`;
   }
 }
 
