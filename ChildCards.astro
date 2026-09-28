@@ -9,9 +9,11 @@ interface Props {
   depth?: 1 | 2 | 3 | 4;
   columns?: 1 | 2 | 3 | 4;
   variant?: 'full' | 'compact' | 'quickstart';
+  basePath?: string;
 }
 
 const { collection = 'docs', folder, variant = 'full' } = Astro.props;
+const basePath = Astro.props.basePath !== undefined ? Astro.props.basePath : `/${collection}`;
 // coerce so depth={2} and depth="2" both work
 const depth = Number(Astro.props.depth ?? 1) as 1 | 2 | 3 | 4;
 const columns = Number(Astro.props.columns ?? 2) as 1 | 2 | 3 | 4;
@@ -117,7 +119,7 @@ const colClass = colClasses[columns] ?? colClasses[2];
 
 async function pageToItem(p: any): Promise<NavItem> {
   return {
-    href: `/${collection}/${stripExt(p.id).replace(/\/index$/, '')}`,
+    href: `${basePath}/${stripExt(p.id).replace(/\/index$/, '')}`,
     title: await md(p.data.title) as string,
     description: p.data.description,
     icon: p.data.icon ?? null,
